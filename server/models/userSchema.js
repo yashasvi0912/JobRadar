@@ -1,46 +1,70 @@
+import mongoose from "mongoose";
+import bcrypt from "bcrypt"
 
-import nodemailer from "nodemailer"
-import dotenv from "dotenv"
-
-dotenv.config({ path: "./config.env" })
-
-// to send a email we need a transporter 
-
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',   // Gmail SMTP
-    port: 465,                // 465 for SSL, 587 for STARTTLS
-    secure: true,             // true for 465, false for 587
-    auth: {
-        user: process.env.USER_EMAIL,
-        pass: process.env.USER_EMAIL_PASSWORD,
-    }
-});
-
-let test = (req, res) => {
-    res.status(200).json({ message: "welcome to user test route !" })
+let addressObject = {
+    street: "", city: "", state: "", country: "", pincode: ""
 }
 
-let handleUserRegister = (req, res) => {
+let emailObject = {
+    userEmail: "", verified: false
+}
+
+let userShcema = mongoose.Schema({
+    name: {
+        type: String,
+        require: true
+    },
+    email: {
+        type: Object,
+        require: true,
+        default: emailObject
+    },
+    password: {
+        type: String,
+        require: true
+    },
+    phone: {
+        type: String,
+        require: true
+    },
+    address: {
+        type: Object,
+        require: true,
+        default: addressObject
+    },
+    dob: {
+        type: String,
+        require: true
+    },
+    qualifications: {
+        type: String,
+        default: ""
+    },
+    documents: {
+        type: Array,
+        default: [] 
+    },
+    appliedJobs: {
+        type: Array,
+        default: []
+    },
+    timeStamp: {
+        type: Date,
+        default: Date.now()
+    }
+})
+
+userShcema.pre("save", async function () {
     try {
-        let { name, phone, email, address, dob, qualifications } = req.body
-
-        if (!name || !phone || !email || !address || !dob || !qualifications) throw ("invalid/missing data !")
-
-        // check if user exits
-            // if found then error
-
-        // create user object
-
-        // encrypt password
-
-        // save user object
-
-        // exit
-
+        console.log("user password is :", this.password)
+        this.password = await bcrypt.hash(this.password, 10)
+        console.log("password hased and saved !")
     } catch (err) {
-        console.log("error while registering user : ", err)
-        res.status(400).json({ message: "unable to register user !", err })
+        console.log("error in pre method : ", err)
+        throw err
     }
-}
+})
 
-export { test, handleUserRegister }
+let userModel = new mongoose.model("users", userShcema)
+
+export { userModel }
