@@ -1,4 +1,3 @@
-
 import express from "express"
 import dotenv from "dotenv"
 import cors from "cors"
@@ -18,10 +17,10 @@ app.use(express.static("public"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-let corsOptions = {
-    origin: "*",
-    method: " *"
-}
+const corsOptions = {
+  origin: "*",
+  methods: "*",
+};
 
 app.use(cors(corsOptions))
 
