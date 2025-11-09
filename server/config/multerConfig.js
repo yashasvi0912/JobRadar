@@ -1,30 +1,39 @@
-import multer from "multer"
-import path from "path"
+import multer from "multer"; 
+import path from "path";     
+import fs from "fs";         
 
-// Define storage logic
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const fileType = req.params.file_type // e.g. 'resume' or 'profile_pictures'
+// Function: Storage system create karta hai (allowed file types ke sath)
+const makeStorage = (types) =>
+  multer.diskStorage({
+    
+    destination(req, file, cb) {
+      const type = req.params.file_type; 
+      
+      // if file type is not allowed throw error 
+      if (!types.includes(type)) return cb(new Error("Invalid type"));
+      
+      //  file Type ke based par folder set
+      const dir = path.join(
+        "upload",
+        type === "resume" ? "resumes" :
+        type === "profile_picture" ? "profile_pictures" :
+        type === "logo" ? "company_logos" : "others"
+      );
 
-        // Allow only 'resume' or 'profile_pictures' or 'company_logo'
-        if (fileType !== "resume" && fileType !== "profile_picture") {
-            return cb(new Error("Invalid upload type."))
-        }
+     // Create the folder if it doesn't exist
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-        // Define destination based on type
-        const uploadPath = path.join("uploads", fileType === "resume" ? "resumes" : "profile_pictures")
-
-        // uploads/profile_picture 
-
-        cb(null, uploadPath)
+      cb(null, dir); // set the destination folder
     },
 
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`
-        cb(null, uniqueName)
-    },
-})
+     // Create a unique file name (time + original name)
+    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
+  });
 
-const upload = multer({ storage })
 
-export { upload }
+// Uploader for user: only "resume" and "profile_picture" allowed
+
+export const uploadUser = multer({ storage: makeStorage(["resume", "profile_picture"]) });
+
+// Uploader for company: allows "resume", "profile_picture", and "logo"
+export const uploadCompany = multer({ storage: makeStorage(["resume", "profile_picture", "logo"]) });
