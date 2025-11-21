@@ -1,7 +1,7 @@
 import React from 'react'
-import Header from '../sections/includes/Header.js'
-import Footer from '../sections/includes/Footer.js'
-import UserLoginRegisterForm from '../sections/UserLoginRegisterForm.js'
+import Header from '../sections/includes/Header.jsx'
+import Footer from '../sections/includes/Footer.jsx'
+import UserLoginRegisterForm from '../sections/UserLoginRegisterForm.jsx'
 
 const UserLoginRegister = () => {
     return (
