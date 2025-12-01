@@ -64,6 +64,8 @@ async function sendOTPForPasswordReset(email) {
 
         redisClient.setEx(`emailPasswordReset:${email}`, 300, otp)
 
+        console.log("otp is : ", otp)
+
         return { messag: "otp sent successfully !", status: true }
 
     } catch (err) {
@@ -193,6 +195,8 @@ const handleResetPasswordRequest = async (req, res) => {
 
         let { email } = req.body;
 
+        console.log(req.body)
+
         if (!email) throw ("invalid/incomplete data !")
 
         let userExists = await userModel.findOne({ "email.userEmail": email })
@@ -215,7 +219,9 @@ const handleResetPasswordRequest = async (req, res) => {
 const handleOTPForPasswordReset = async (req, res) => {
     try {
 
-        let { email, userOtp, newPassword } = req.body;
+        let { email, otp, password } = req.body;
+
+        console.log(req.body)
 
         // check if email exits
         let emailExits = await userModel.findOne({ "email.userEmail": email })
@@ -226,13 +232,13 @@ const handleOTPForPasswordReset = async (req, res) => {
 
         if (!storedOtp) throw ("otp is expried/not found !")
 
-        if (storedOtp != userOtp) throw ("invalid otp !")
+        if (storedOtp != otp) throw ("invalid otp !")
 
         console.log('otp matched successfully for password reset !')
 
         // encrypt
 
-        let hash = await bcrypt.hash(newPassword, 10)
+        let hash = await bcrypt.hash(password, 10)
 
         // change verification status to true
         let updateUserObject = await userModel.updateOne({ "email.userEmail": email }, { $set: { "password": hash } })
@@ -253,7 +259,6 @@ const handleOTPForPasswordReset = async (req, res) => {
 const handleUserFileUpload = async (req, res) => {
     try {
         if (!req.file) throw new Error("Failed to upload a file!");
-
         const fileName = req.file.filename;
         const fileType = req.params.file_type; // 'resume' or 'profile_pictures'
 
@@ -311,4 +316,23 @@ const fetchProfile = async (req, res) => {
     }
 }
 
-export { test, handleUserRegister, handleOTPVerification, handleUserLogin, handleResetPasswordRequest, handleOTPForPasswordReset, handleUserFileUpload, fetchProfile }
+const addBio = async (req, res) => {
+    try {
+
+        let user = req.user
+
+        let { newBio } = req.body
+
+        if (!user) throw ("not validated as user | please relogin")
+
+        await userModel.updateOne({ email: user.email.userEmail }, { $set: { bio: newBio } })
+
+        res.status(202).json({ message: "bio update successfully !" })
+    } catch (err) {
+        console.log("error while updating user bio")
+        res.status(500).json({ message: "failed to update bio", err })
+    }
+    let user = req.user
+}
+
+export { test, handleUserRegister, handleOTPVerification, handleUserLogin, handleResetPasswordRequest, handleOTPForPasswordReset, handleUserFileUpload, fetchProfile, addBio }
